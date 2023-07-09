@@ -2,8 +2,9 @@ const itemForm = document.getElementById("item-form");
 const itemInput = document.getElementById("item-input");
 const itemList = document.getElementById("item-list");
 const clearBtn = document.getElementById("clear");
+const formBtn=itemForm.querySelector("button");
 const itemFilter = document.getElementById("filter");
-
+let isEditMode = false;
 function ononaddItemsubmit(e) {
   const newItemText = itemInput.value;
   e.preventDefault();
@@ -11,6 +12,25 @@ function ononaddItemsubmit(e) {
   if (newItemText === "") {
     alert("please enter a value");
     return;
+  }
+  //check for edit
+  if(isEditMode){
+    if(checkifItemExist(newItemText)){
+      alert("Item already exist");
+      return;
+    }
+    else{
+    const editItem=itemList.querySelector(".edit-mode");
+    removeItemFromStorage(editItem.textContent);
+    editItem.classList.remove("edit-mode");
+    editItem.remove();
+    isEditMode=false;}
+
+  }else{
+    if(checkifItemExist(newItemText)){
+      alert("Item already exist");
+      return;
+    }
   }
   //create new item dom element
 
@@ -69,35 +89,58 @@ function createIcon(cssClass) {
   return icon;
 }
 function removeItem(e) {
-    if (e.target.parentElement.classList.contains("remove-item")) {
-        onClickRemove(e.target.parentElement.parentElement);
-      }
+  if (e.target.parentElement.classList.contains("remove-item")) {
+    onClickRemove(e.target.parentElement.parentElement);
+  }
+  else{
+    setItemToEdit(e.target);
+
+  }
 }
-function onClickRemove(item) 
-{
-    if(confirm("Are you sure?")){
-        item.remove();
-        //remove from storage
-        removeItemFromStorage(item.textContent);
-        checkUI();
-    }
- 
+function setItemToEdit(item) {
+  isEditMode = true;
+  
+itemList.querySelectorAll("li").forEach((i) => {
+    i.classList.remove("edit-mode");
+
+});
+  item.classList.add("edit-mode");
+  formBtn.innerHTML= '<i class="fa-solid fa-pen"></i>Update Item';
+  formBtn.style.backgroundColor="green";
+  itemInput.value = item.textContent;
+}
+function onClickRemove(item) {
+  if (confirm("Are you sure?")) {
+    item.remove();
+    //remove from storage
+    removeItemFromStorage(item.textContent);
+    checkUI();
+  }
 }
 function removeItemFromStorage(item) {
-    let items = getItemFromStorage();
-    items=items.filter((i) =>i !== item);
-    localStorage.setItem("items",JSON.stringify(items));
-
+  let items = getItemFromStorage();
+  items = items.filter((i) => i !== item);
+  localStorage.setItem("items", JSON.stringify(items));
 }
 function clearItem(e) {
   while (itemList.firstChild) {
     itemList.removeChild(itemList.firstChild);
   }
   //clear from storage
-    localStorage.removeItem("items");
+  localStorage.removeItem("items");
   checkUI();
 }
+function checkifItemExist(item) {
+  const items=getItemFromStorage();
+  if(items.includes(item)){
+    return true;
+
+  }else{
+    return false;
+  }
+}
 function checkUI() {
+  itemInput.value = "";
   const Items = itemList.querySelectorAll("li");
   console.log(Items);
   if (Items.length === 0) {
@@ -106,7 +149,11 @@ function checkUI() {
   } else {
     clearBtn.style.display = "block";
     itemFilter.style.display = "block";
+
   }
+  formBtn.innerHTML= '<i class="fa-solid fa-plus"></i>Add Item';
+  formBtn.style.backgroundColor="black";
+  isEditMode=false;
 }
 
 //events
